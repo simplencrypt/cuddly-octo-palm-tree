@@ -1,31 +1,22 @@
-const demoUser = {
-  studentId: "STU2026",
-  password: "bank123",
-  name: "Aarav Sharma",
-  accountNumber: "XXXXXX8751",
-  balance: 25000,
-  transactions: [
-    { type: "credit", label: "Scholarship Credit", amount: 5000, date: "2026-01-05" },
-    { type: "debit", label: "Hostel Fee", amount: 8000, date: "2026-01-11" },
-    { type: "debit", label: "Cafeteria", amount: 340, date: "2026-01-14" }
-  ]
-};
-
 const state = {
-  loggedIn: false,
-  profile: structuredClone(demoUser)
+  user: null
 };
 
 const elements = {
   authSection: document.getElementById("authSection"),
   dashboardSection: document.getElementById("dashboardSection"),
+  signupForm: document.getElementById("signupForm"),
   loginForm: document.getElementById("loginForm"),
   transferForm: document.getElementById("transferForm"),
-  billForm: document.getElementById("billForm"),
-  logoutBtn: document.getElementById("logoutBtn"),
+  tabs: document.querySelectorAll(".tab"),
+  profileName: document.getElementById("profileName"),
+  profileEmail: document.getElementById("profileEmail"),
+  profileAge: document.getElementById("profileAge"),
+  profileGender: document.getElementById("profileGender"),
   balance: document.getElementById("balance"),
   accountNumber: document.getElementById("accountNumber"),
   transactionList: document.getElementById("transactionList"),
+  logoutBtn: document.getElementById("logoutBtn"),
   toast: document.getElementById("toast")
 };
 
@@ -43,107 +34,150 @@ function showToast(message) {
   clearTimeout(showToast.timeoutId);
   showToast.timeoutId = setTimeout(() => {
     elements.toast.classList.add("hidden");
-  }, 2000);
+  }, 2600);
+}
+
+function switchTab(tabName) {
+  elements.tabs.forEach((tab) => {
+    tab.classList.toggle("active", tab.dataset.tab === tabName);
+  });
+
+  elements.signupForm.classList.toggle("hidden", tabName !== "signup");
+  elements.signupForm.classList.toggle("active", tabName === "signup");
+  elements.loginForm.classList.toggle("hidden", tabName !== "login");
+  elements.loginForm.classList.toggle("active", tabName === "login");
 }
 
 function renderDashboard() {
-  elements.balance.textContent = formatCurrency(state.profile.balance);
-  elements.accountNumber.textContent = state.profile.accountNumber;
+  if (!state.user) {
+    return;
+  }
+
+  elements.profileName.textContent = state.user.name;
+  elements.profileEmail.textContent = state.user.email;
+  elements.profileAge.textContent = state.user.age;
+  elements.profileGender.textContent = state.user.gender;
+  elements.balance.textContent = formatCurrency(state.user.balance);
+  elements.accountNumber.textContent = state.user.accountNumber;
 
   elements.transactionList.innerHTML = "";
-  state.profile.transactions
+  state.user.transactions
     .slice()
     .reverse()
     .forEach((txn) => {
       const item = document.createElement("li");
-      const amountClass = txn.type === "credit" ? "txn-credit" : "txn-debit";
-      const symbol = txn.type === "credit" ? "+" : "-";
+      const sign = txn.type === "credit" ? "+" : "-";
+      const cls = txn.type === "credit" ? "txn-credit" : "txn-debit";
+
       item.innerHTML = `
-        <span>${txn.label}<br /><small class="muted">${txn.date}</small></span>
-        <span class="${amountClass}">${symbol}${formatCurrency(txn.amount)}</span>
+        <span>${txn.label}<br /><small>${txn.date}</small></span>
+        <span class="${cls}">${sign}${formatCurrency(txn.amount)}</span>
       `;
+
       elements.transactionList.appendChild(item);
     });
 }
 
-function setLoggedIn(loggedIn) {
-  state.loggedIn = loggedIn;
-  elements.authSection.classList.toggle("hidden", loggedIn);
-  elements.dashboardSection.classList.toggle("hidden", !loggedIn);
-  if (loggedIn) {
+function setLoggedIn(isLoggedIn) {
+  elements.authSection.classList.toggle("hidden", isLoggedIn);
+  elements.dashboardSection.classList.toggle("hidden", !isLoggedIn);
+  if (isLoggedIn) {
     renderDashboard();
   }
 }
 
-function addTransaction(type, label, amount) {
-  state.profile.transactions.push({
-    type,
-    label,
-    amount,
-    date: new Date().toISOString().slice(0, 10)
+async function api(path, method, payload) {
+  const response = await fetch(path, {
+    method,
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify(payload)
   });
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data.message || "Something went wrong.");
+  }
+
+  return data;
 }
 
-elements.loginForm.addEventListener("submit", (event) => {
-  event.preventDefault();
-  const studentId = document.getElementById("studentId").value.trim();
-  const password = document.getElementById("password").value.trim();
+elements.tabs.forEach((tab) => {
+  tab.addEventListener("click", () => {
+    switchTab(tab.dataset.tab);
+  });
+});
 
-  if (studentId === demoUser.studentId && password === demoUser.password) {
+elements.signupForm.addEventListener("submit", async (event) => {
+  event.preventDefault();
+
+  const payload = {
+    name: document.getElementById("signupName").value.trim(),
+    age: Number(document.getElementById("signupAge").value),
+    gender: document.getElementById("signupGender").value,
+    email: document.getElementById("signupEmail").value.trim(),
+    password: document.getElementById("signupPassword").value
+  };
+
+  try {
+    const data = await api("/api/signup", "POST", payload);
+    showToast(data.message);
+    elements.signupForm.reset();
+    switchTab("login");
+  } catch (error) {
+    showToast(error.message);
+  }
+});
+
+elements.loginForm.addEventListener("submit", async (event) => {
+  event.preventDefault();
+
+  const payload = {
+    email: document.getElementById("loginEmail").value.trim(),
+    password: document.getElementById("loginPassword").value
+  };
+
+  try {
+    const data = await api("/api/login", "POST", payload);
+    state.user = data.profile;
     setLoggedIn(true);
-    showToast(`Welcome ${demoUser.name}!`);
-  } else {
-    showToast("Invalid credentials. Please try demo login.");
+    showToast(`Welcome ${state.user.name}!`);
+    elements.loginForm.reset();
+  } catch (error) {
+    showToast(error.message);
   }
 });
 
-elements.transferForm.addEventListener("submit", (event) => {
+elements.transferForm.addEventListener("submit", async (event) => {
   event.preventDefault();
-  const recipient = document.getElementById("recipient").value.trim();
-  const amount = Number(document.getElementById("transferAmount").value);
 
-  if (!recipient || amount <= 0) {
-    showToast("Enter valid transfer details.");
+  if (!state.user) {
     return;
   }
 
-  if (amount > state.profile.balance) {
-    showToast("Insufficient balance.");
-    return;
+  const payload = {
+    userId: state.user.id,
+    recipient: document.getElementById("recipient").value.trim(),
+    amount: Number(document.getElementById("transferAmount").value)
+  };
+
+  try {
+    const data = await api("/api/transfer", "POST", payload);
+    state.user.balance = data.balance;
+    state.user.transactions = data.transactions;
+    elements.transferForm.reset();
+    renderDashboard();
+    showToast(data.message);
+  } catch (error) {
+    showToast(error.message);
   }
-
-  state.profile.balance -= amount;
-  addTransaction("debit", `Transfer to ${recipient}`, amount);
-  elements.transferForm.reset();
-  renderDashboard();
-  showToast("Transfer successful.");
-});
-
-elements.billForm.addEventListener("submit", (event) => {
-  event.preventDefault();
-  const billType = document.getElementById("billType").value;
-  const amount = Number(document.getElementById("billAmount").value);
-
-  if (!billType || amount <= 0) {
-    showToast("Enter valid bill payment details.");
-    return;
-  }
-
-  if (amount > state.profile.balance) {
-    showToast("Insufficient balance.");
-    return;
-  }
-
-  state.profile.balance -= amount;
-  addTransaction("debit", `${billType} Bill Paid`, amount);
-  elements.billForm.reset();
-  renderDashboard();
-  showToast(`${billType} bill paid.`);
 });
 
 elements.logoutBtn.addEventListener("click", () => {
-  state.profile = structuredClone(demoUser);
-  elements.loginForm.reset();
+  state.user = null;
   setLoggedIn(false);
+  switchTab("login");
   showToast("Logged out.");
 });

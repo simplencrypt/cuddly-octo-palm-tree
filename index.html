@@ -3,47 +3,87 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>CampusBank - Online Banking System</title>
+    <title>CampusBank - Smart Student Banking</title>
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
-    <header class="topbar">
+    <div class="bg-orb orb-1"></div>
+    <div class="bg-orb orb-2"></div>
+    <div class="bg-grid"></div>
+
+    <header class="topbar glass">
       <h1>CampusBank</h1>
-      <p>Online Banking System (College Project)</p>
+      <p>Modern online banking system for your college project</p>
     </header>
 
     <main class="container">
-      <section class="card auth-card" id="authSection">
-        <h2>Student Login</h2>
-        <p class="muted">Use your student ID and password to enter your account.</p>
-        <form id="loginForm">
+      <section class="glass auth-shell" id="authSection">
+        <div class="tabs">
+          <button class="tab active" data-tab="signup">Sign Up</button>
+          <button class="tab" data-tab="login">Login</button>
+        </div>
+
+        <form id="signupForm" class="auth-form active">
+          <h2>Create Account</h2>
           <label>
-            Student ID
-            <input type="text" id="studentId" placeholder="e.g. STU2026" required />
+            Full Name
+            <input type="text" id="signupName" placeholder="e.g. Ananya Singh" required />
+          </label>
+          <label>
+            Age
+            <input type="number" id="signupAge" min="16" max="90" required />
+          </label>
+          <label>
+            Gender
+            <select id="signupGender" required>
+              <option value="">Select</option>
+              <option>Male</option>
+              <option>Female</option>
+              <option>Other</option>
+            </select>
+          </label>
+          <label>
+            Email
+            <input type="email" id="signupEmail" placeholder="you@example.com" required />
           </label>
           <label>
             Password
-            <input type="password" id="password" placeholder="••••••••" required />
+            <input type="password" id="signupPassword" minlength="6" required />
           </label>
-          <button type="submit">Login</button>
+          <button type="submit">Create Account & Send Confirmation</button>
         </form>
-        <p class="hint">Demo credentials: <strong>STU2026</strong> / <strong>bank123</strong></p>
+
+        <form id="loginForm" class="auth-form hidden">
+          <h2>Welcome Back</h2>
+          <label>
+            Email
+            <input type="email" id="loginEmail" placeholder="you@example.com" required />
+          </label>
+          <label>
+            Password
+            <input type="password" id="loginPassword" required />
+          </label>
+          <button type="submit">Login to Dashboard</button>
+        </form>
       </section>
 
       <section class="dashboard hidden" id="dashboardSection">
-        <div class="grid">
-          <article class="card">
+        <div class="dashboard-grid">
+          <article class="glass card profile-card">
             <h3>Account Summary</h3>
+            <p class="name" id="profileName"></p>
+            <p class="meta">Email: <span id="profileEmail"></span></p>
+            <p class="meta">Age: <span id="profileAge"></span> | Gender: <span id="profileGender"></span></p>
             <p class="balance" id="balance">₹0</p>
-            <p class="muted">Account Number: <span id="accountNumber"></span></p>
+            <p class="meta">Account Number: <span id="accountNumber"></span></p>
           </article>
 
-          <article class="card">
+          <article class="glass card">
             <h3>Quick Transfer</h3>
             <form id="transferForm">
               <label>
                 Recipient Name
-                <input type="text" id="recipient" placeholder="Enter recipient name" required />
+                <input type="text" id="recipient" required />
               </label>
               <label>
                 Amount (₹)
@@ -53,31 +93,10 @@
             </form>
           </article>
 
-          <article class="card">
-            <h3>Bill Payment</h3>
-            <form id="billForm">
-              <label>
-                Bill Type
-                <select id="billType" required>
-                  <option value="">Select Bill</option>
-                  <option>Electricity</option>
-                  <option>Mobile Recharge</option>
-                  <option>Internet</option>
-                  <option>Water</option>
-                </select>
-              </label>
-              <label>
-                Amount (₹)
-                <input type="number" id="billAmount" min="1" required />
-              </label>
-              <button type="submit">Pay Bill</button>
-            </form>
-          </article>
-
-          <article class="card history-card">
-            <div class="history-header">
+          <article class="glass card history-card">
+            <div class="history-head">
               <h3>Recent Transactions</h3>
-              <button id="logoutBtn" class="secondary">Logout</button>
+              <button id="logoutBtn" class="secondary" type="button">Logout</button>
             </div>
             <ul id="transactionList"></ul>
           </article>
