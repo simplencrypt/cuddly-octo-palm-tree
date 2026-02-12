@@ -1,7 +1,7 @@
 {
   "name": "campusbank",
   "version": "1.0.0",
-  "description": "CampusBank full-stack demo with signup/login and email confirmation",
+  "description": "CampusBank full-stack demo with signup/login",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
@@ -10,7 +10,6 @@
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",
-    "express": "^4.21.2",
-    "nodemailer": "^6.10.0"
+    "express": "^4.21.2"
   }
 }

@@ -2,7 +2,6 @@ const express = require("express");
 const path = require("path");
 const fs = require("fs");
 const bcrypt = require("bcryptjs");
-const nodemailer = require("nodemailer");
 const crypto = require("crypto");
 
 const app = express();
@@ -28,48 +27,6 @@ function readUsers() {
 
 function writeUsers(users) {
   fs.writeFileSync(DATA_FILE, JSON.stringify(users, null, 2));
-}
-
-function createTransporter() {
-  const { SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, SMTP_SECURE } = process.env;
-
-  if (!SMTP_HOST || !SMTP_PORT || !SMTP_USER || !SMTP_PASS) {
-    return null;
-  }
-
-  return nodemailer.createTransport({
-    host: SMTP_HOST,
-    port: Number(SMTP_PORT),
-    secure: SMTP_SECURE === "true",
-    auth: {
-      user: SMTP_USER,
-      pass: SMTP_PASS
-    }
-  });
-}
-
-async function sendConfirmationEmail({ toEmail, name }) {
-  const transporter = createTransporter();
-
-  if (!transporter) {
-    throw new Error("SMTP is not configured. Set SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS.");
-  }
-
-  const from = process.env.FROM_EMAIL || process.env.SMTP_USER;
-
-  await transporter.sendMail({
-    from: `CampusBank <${from}>`,
-    to: toEmail,
-    subject: "CampusBank signup confirmation",
-    html: `
-      <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #111827;">
-        <h2>Welcome to CampusBank, ${name}!</h2>
-        <p>Your account has been created successfully.</p>
-        <p>You can now login and use your dashboard.</p>
-        <p>Regards,<br/>CampusBank Team</p>
-      </div>
-    `
-  });
 }
 
 app.post("/api/signup", async (req, res) => {
@@ -108,16 +65,7 @@ app.post("/api/signup", async (req, res) => {
   users.push(newUser);
   writeUsers(users);
 
-  try {
-    await sendConfirmationEmail({ toEmail: normalizedEmail, name: newUser.name });
-  } catch (error) {
-    console.error("Email send failed:", error.message);
-    return res.status(500).json({
-      message: "Signup created, but confirmation email failed. Check SMTP configuration."
-    });
-  }
-
-  return res.status(201).json({ message: "Signup successful. Confirmation email sent." });
+  return res.status(201).json({ message: "Signup successful. You can now login." });
 });
 
 app.post("/api/login", async (req, res) => {
