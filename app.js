@@ -34,7 +34,7 @@ function showToast(message) {
   clearTimeout(showToast.timeoutId);
   showToast.timeoutId = setTimeout(() => {
     elements.toast.classList.add("hidden");
-  }, 2600);
+  }, 3200);
 }
 
 function switchTab(tabName) {
@@ -86,16 +86,34 @@ function setLoggedIn(isLoggedIn) {
   }
 }
 
-async function api(path, method, payload) {
-  const response = await fetch(path, {
-    method,
-    headers: {
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify(payload)
-  });
+function backendHelpMessage() {
+  return "Cannot connect to backend. Run `npm install` and `npm start`, then open http://localhost:8000.";
+}
 
-  const data = await response.json();
+async function api(path, method, payload) {
+  let response;
+
+  try {
+    response = await fetch(path, {
+      method,
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(payload)
+    });
+  } catch (_error) {
+    throw new Error(backendHelpMessage());
+  }
+
+  let data = {};
+
+  try {
+    data = await response.json();
+  } catch (_error) {
+    if (!response.ok) {
+      throw new Error("Server returned an invalid response. Please restart the backend server.");
+    }
+  }
 
   if (!response.ok) {
     throw new Error(data.message || "Something went wrong.");
@@ -181,3 +199,7 @@ elements.logoutBtn.addEventListener("click", () => {
   switchTab("login");
   showToast("Logged out.");
 });
+
+if (window.location.protocol === "file:") {
+  showToast("Please run with backend: `npm start`, then open http://localhost:8000");
+}

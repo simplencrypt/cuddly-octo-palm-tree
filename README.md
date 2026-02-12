@@ -37,6 +37,13 @@ npm install
 npm start
 ```
 
+## Important
+
+Do **not** run this app with `python3 -m http.server` for signup/login.
+Those features call backend APIs (`/api/signup`, `/api/login`, `/api/transfer`) and require the Node server.
+If you see **"Failed to fetch"**, it usually means the backend is not running.
+
+
 Open:
 
 - `http://localhost:8000`
